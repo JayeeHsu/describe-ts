@@ -1,0 +1,28 @@
+{
+  "name": "describe-ts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JayeeHsu/describe-ts.git"
+  },
+  "author": "JayeeHsu",
+  "keywords": [
+    "typescript"
+  ],
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JayeeHsu/describe-ts/issues"
+  },
+  "homepage": "https://github.com/JayeeHsu/describe-ts#readme",
+  "peerDependencies": {
+    "typescript": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.4"
+  }
+}
