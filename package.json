@@ -4,7 +4,8 @@
   "description": "",
   "main": "lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "play": "ts-node-esm src/playground/index.ts"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,8 @@
     "typescript": "*"
   },
   "devDependencies": {
-    "typescript": "^5.0.4"
+    "prettier": "^2.8.7",
+    "typescript": "^5.0.4",
+    "vitest": "^0.30.1"
   }
 }
