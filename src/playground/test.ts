@@ -9,5 +9,9 @@ export interface SimpleComponentProps {
        * */
       color: 'blue' | 'green';
 
+      /**
+      * Disabled
+      * @default true
+      * */
       isDisabled?: boolean;
 }

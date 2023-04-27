@@ -1,14 +1,12 @@
 import * as ts from 'typescript';
-import * as fs from 'fs';
-import * as path from 'path';
 
 import { createPropFilter } from './createPropFilter';
 
-export interface IStringIndexedObject<T> {
+interface IStringIndexedObject<T> {
       [key: string]: T;
 }
 
-export interface IPropItemType {
+interface IPropItemType {
       name: string;
       value?: any;
       raw?: string;
@@ -23,19 +21,19 @@ export interface IPropItem {
       tags: Record<string, any>
 }
 
-export interface IPropsInfo extends IStringIndexedObject<IPropItem> { }
+interface IPropsInfo extends IStringIndexedObject<IPropItem> { }
 
-export interface IMethodParameter {
+interface IMethodParameter {
       name: string;
       description?: string | null;
       type: IMethodParameterType;
 }
 
-export interface IMethodParameterType {
+interface IMethodParameterType {
       name: string;
 }
 
-export interface IMethod {
+interface IMethod {
       name: string;
       docblock: string;
       modifiers: string[];
@@ -50,7 +48,7 @@ export interface IMethod {
 export interface IComponentDoc {
       exportName: string;
       description: string;
-      props: Props;
+      props: IPropsInfo;
       methods: IMethod[];
       block?: [number, number];
       tags: Record<string, any>
@@ -61,7 +59,7 @@ export interface IComponent {
       name: string;
 }
 
-export interface IPropItemType {
+interface IPropItemType {
       name: string;
       value?: any;
       raw?: string;
@@ -72,93 +70,34 @@ export interface StaticPropFilter {
       skipPropsWithoutDoc?: boolean;
 }
 
-export type PropFilter = (props: IPropItem, component: IComponent) => boolean;
+export type TPropFilter = (props: IPropItem, component: IComponent) => boolean;
 
 export interface ParserOptions {
-      propFilter?: StaticPropFilter | PropFilter;
+      propFilter?: StaticPropFilter | TPropFilter;
       shouldExtractLiteralValuesFromEnum?: boolean;
 }
 
-export const defaultParserOpts: ParserOptions = {};
+const defaultParserOpts: ParserOptions = {};
 
-export interface FileParser {
-      parse(filePathOrPaths: string | string[]): IComponentDoc[];
-      parseWithProgramProvider(filePathOrPaths: string | string[], programProvider?: () => ts.Program): IComponentDoc[];
-}
-
-const defaultOptions: ts.CompilerOptions = {
+const defaultCompilerOptions: ts.CompilerOptions = {
       jsx: ts.JsxEmit.React,
       module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.Latest,
 };
 
-/**
- * Parses a file with default TS options
- * @param filePath component file that should be parsed
- */
-export function parse(filePathOrPaths: string | string[], parserOpts: ParserOptions = defaultParserOpts) {
-      return withCompilerOptions(defaultOptions, parserOpts).parse(filePathOrPaths);
-}
-
-/**
- * Constructs a parser for a default configuration.
- */
-export function withDefaultConfig(parserOpts: ParserOptions = defaultParserOpts): FileParser {
-      return withCompilerOptions(defaultOptions, parserOpts);
-}
-
-/**
- * Constructs a parser for a specified tsconfig file.
- */
-export function withCustomConfig(tsconfigPath: string, parserOpts: ParserOptions): FileParser {
-      const basePath = path.dirname(tsconfigPath);
-      const { config, error } = ts.readConfigFile(tsconfigPath, (filename) => fs.readFileSync(filename, 'utf8'));
-
-      if (error !== undefined) {
-            // tslint:disable-next-line: max-line-length
-            const errorText = `Cannot load custom tsconfig.json from provided path: ${tsconfigPath}, with error code: ${error.code}, message: ${error.messageText}`;
-            throw new Error(errorText);
-      }
-
-      const { options, errors } = ts.parseJsonConfigFileContent(config, ts.sys, basePath, {}, tsconfigPath);
-
-      if (errors && errors.length) {
-            throw errors[0];
-      }
-
-      return withCompilerOptions(options, parserOpts);
-}
-
-/**
- * Constructs a parser for a specified set of TS compiler options.
- */
-export function withCompilerOptions(
-      compilerOptions: ts.CompilerOptions,
-      parserOpts: ParserOptions = defaultParserOpts,
-): FileParser {
-      return {
-            parse(filePathOrPaths: string | string[]): IComponentDoc[] {
-                  return parseWithProgramProvider(filePathOrPaths, compilerOptions, parserOpts);
-            },
-            parseWithProgramProvider(filePathOrPaths, programProvider) {
-                  return parseWithProgramProvider(filePathOrPaths, compilerOptions, parserOpts, programProvider);
-            },
-      };
-}
-
-function parseWithProgramProvider(
+export function parse(
       filePathOrPaths: string | string[],
-      compilerOptions: ts.CompilerOptions,
-      parserOpts: ParserOptions,
-      programProvider?: () => ts.Program
+      compilerOptions: ts.CompilerOptions = defaultCompilerOptions,
+      parserOpts: ParserOptions = defaultParserOpts,
 ): IComponentDoc[] {
       const filePaths = Array.isArray(filePathOrPaths) ? filePathOrPaths : [filePathOrPaths];
 
-      const program = programProvider ? programProvider() : ts.createProgram(filePaths, compilerOptions);
+      const program = ts.createProgram(filePaths, compilerOptions);
 
       const parser = new Parser(program, parserOpts);
 
       const checker = program.getTypeChecker();
+
 
       return filePaths
             .map((filePath) => program.getSourceFile(filePath))
@@ -176,7 +115,7 @@ function parseWithProgramProvider(
                         .filter((componentDoc, index, componentDocs) => {
                               // 因为如果从不同的文件重新导出，getExportsOfModule函数可以返回重复的导出。
                               // 通过过滤掉重复项，我们确保每个组件在docs数组中只包含一次。
-                              componentDocs.slice(index + 1).every((innerComponentsDoc) => innerComponentsDoc.exportName !== componentDoc!.exportName)
+                              return componentDocs.slice(index + 1).every((innerComponentsDoc) => innerComponentsDoc.exportName !== componentDoc!.exportName)
                         })
             })
 }
@@ -184,18 +123,12 @@ function parseWithProgramProvider(
 interface IJSDoc {
       description: string;
       fullComment: string;
-      tags: IStringIndexedObject<string>;
+      tags: IStringIndexedObject<string | string[]>;
 }
 
-const defaultDoc: IJSDoc = {
-      description: '',
-      fullComment: '',
-      tags: {}
-}
-
-export class Parser {
+class Parser {
       private checker: ts.TypeChecker; // 类型检查器，可用于对程序中的源文件进行语义分析
-      private propFilter: PropFilter;
+      private propFilter: TPropFilter;
       private shouldExtractLiteralValuesFromEnum: boolean;
 
       constructor(program: ts.Program, opts: ParserOptions) {
@@ -205,9 +138,18 @@ export class Parser {
             this.shouldExtractLiteralValuesFromEnum = Boolean(shouldExtractLiteralValuesFromEnum);
       }
 
+      // 获取组件文档
       public getComponentDoc(_export: ts.Symbol): IComponentDoc | null {
             const declaration = _export.declarations?.[0];
-            if (!declaration || (!ts.isInterfaceDeclaration(declaration) && !ts.isTypeAliasDeclaration(declaration))) {
+
+            // if (!declaration || (!ts.isInterfaceDeclaration(declaration) && !ts.isTypeAliasDeclaration(declaration))) {
+            //       return null;
+            // }
+            if (!declaration ||
+                  (!ts.isInterfaceDeclaration(declaration)
+                        && !ts.isTypeAliasDeclaration(declaration))
+                  && !ts.isClassDeclaration(declaration)
+            ) {
                   return null;
             }
 
@@ -233,6 +175,11 @@ export class Parser {
 
       // 从注释获取JSDoc
       private getJsDocFromComment(_export: ts.Symbol): IJSDoc {
+            // const defaultDoc: IJSDoc = {
+            //       description: '',
+            //       fullComment: '',
+            //       tags: {}
+            // }
             // in some cases this can be undefined (Pick<Type, 'prop1'|'prop2'>)
             // if (_export.getDocumentationComment === undefined) {
             //       return defaultDoc
@@ -246,18 +193,22 @@ export class Parser {
 
             const tags = _export.getJsDocTags() || [];
 
-            const tagMap: IStringIndexedObject<string> = {};
+            const tagMap: IStringIndexedObject<string | string[]> = {};
 
             const tagComments = tags.map((tag) => {
                   const formattedTag = this.formatTag(tag);
                   const [, key, content] = formattedTag.match(/^@([^ ]+) (.+)/) || [];
-                  tagMap[key] = content;
+                  if (tagMap[key]) {
+                        tagMap[key] = [content, ...tagMap[key]]
+                  } else {
+                        tagMap[key] = content;
+                  }
                   return formattedTag;
             })
 
             return {
                   description: mainComment,
-                  fullComment: `${mainComment}\n${tagComments.join('\n')}`.trim(),
+                  fullComment: `${mainComment} \n${tagComments.join('\n')} `.trim(),
                   tags: tagMap,
             };
       }
@@ -269,26 +220,32 @@ export class Parser {
             if (/^\..+/.test(tagText)) {
                   // @key.key xxxx
                   const [, tagChild = '', desc = ''] = tagText.match(/^(\.[^ ]+)(.+)/) || [];
-                  return `@${name}${tagChild} ${desc.trim()}`;
+                  return `@${name}${tagChild} ${desc.trim()} `;
             }
-            return `@${name} ${tagText}`;
+            return `@${name} ${tagText} `;
       }
 
       // 获取prop信息
-      private getPropsInfo(propsObj: ts.Symbol): IPropsInfo {
-            const propsType = this.checker.getDeclaredTypeOfSymbol(propsObj);
+      private getPropsInfo(_export: ts.Symbol): IPropsInfo {
+            const propsType = this.checker.getDeclaredTypeOfSymbol(_export);
             let propertiesOfProps = propsType.getProperties();
 
             if (!propertiesOfProps.length && propsType.isUnionOrIntersection()) {
+                  // 如果是并集类型或交集类型，则进一步嗅探props解构出来
                   propertiesOfProps = propsType.types.reduce<ts.Symbol[]>((accumulator, type) => [...accumulator, ...type.getProperties()], [])
             }
+
+            propertiesOfProps = propertiesOfProps.filter((prop) => {
+                  // 过滤掉函数成员
+                  return prop.getFlags() & ts.SymbolFlags.Property
+            })
 
             const result: IPropsInfo = {};
 
             propertiesOfProps.forEach((prop) => {
                   const propName = prop.getName();
 
-                  // 通过查看prop对象本身的上下文来查找道具类型
+                  // 通过查看prop对象本身的上下文来查找prop类型
                   const propType = this.checker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
 
                   // 判断prop是不是可选项
@@ -311,11 +268,32 @@ export class Parser {
                   }
             })
 
+            console.log(result)
+
             return result
       }
 
+      // 提取propItem类型
       private getExtractType(propType: ts.Type): IPropItemType {
+            // TypeFormatFlags.InTypeAlias 除去换行和缩进
             const propTypeString = this.checker.typeToString(propType, undefined, ts.TypeFormatFlags.InTypeAlias);
-            return {}
+
+            if ((this.shouldExtractLiteralValuesFromEnum)
+                  && propType.isUnion()
+                  && propType.types.every((type) => type.isStringLiteral())) {
+                  return {
+                        name: 'enum',
+                        raw: propTypeString,
+                        value: propType.types.map((type) => {
+                              return {
+                                    value: type.isStringLiteral() ? `"${type.value}"` : undefined
+                              }
+                        }).filter(Boolean)
+                  }
+            }
+
+            return {
+                  name: propTypeString
+            }
       }
 }

@@ -1,3 +1,4 @@
 import parse from '..';
 
-console.log(parse('./test.ts'));
+// parse('src/playground/switch.ts');
+console.log(parse('src/playground/test.ts'));

@@ -1,13 +1,13 @@
 import {
-      Component,
+      IComponent,
       ParserOptions,
-      PropFilter,
-      PropItem,
+      TPropFilter,
+      IPropItem,
       StaticPropFilter,
 } from "./parser";
 
-export function createPropFilter(opts: ParserOptions): PropFilter {
-      return (prop: PropItem, component: Component) => {
+export function createPropFilter(opts: ParserOptions): TPropFilter {
+      return (prop: IPropItem, component: IComponent) => {
             const { propFilter } = opts;
             // skip children property in case it has no custom documentation
             // if (prop.name === "children" && prop.description.length === 0) {
