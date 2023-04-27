@@ -5,7 +5,8 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "vitest run",
-    "play": "ts-node-esm src/playground/index.ts"
+    "play": "ts-node-esm src/playground/index.ts",
+    "wp": "ts-node-esm src/web-components/test.ts"
   },
   "repository": {
     "type": "git",
@@ -24,8 +25,12 @@
     "typescript": "*"
   },
   "devDependencies": {
+    "lit": "^2.7.3",
     "prettier": "^2.8.7",
     "typescript": "^5.0.4",
     "vitest": "^0.30.1"
+  },
+  "dependencies": {
+    "cross-spawn": "^7.0.3"
   }
 }
