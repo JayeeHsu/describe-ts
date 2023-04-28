@@ -1,7 +1,4 @@
 import * as ts from 'typescript';
-
-import { createPropFilter } from './createPropFilter';
-
 interface IStringIndexedObject<T> {
       [key: string]: T;
 }
@@ -12,7 +9,7 @@ interface IPropItemType {
       raw?: string;
 }
 
-export interface IPropItem {
+interface IPropItem {
       name: string;
       required: boolean;
       type: IPropItemType;
@@ -45,7 +42,7 @@ interface IMethod {
       description: string;
 }
 
-export interface IComponentDoc {
+interface IComponentDoc {
       exportName: string;
       description: string;
       props: IPropsInfo;
@@ -55,7 +52,7 @@ export interface IComponentDoc {
 }
 
 
-export interface IComponent {
+interface IComponent {
       name: string;
 }
 
@@ -65,61 +62,11 @@ interface IPropItemType {
       raw?: string;
 }
 
-export interface StaticPropFilter {
-      skipPropsWithName?: string[] | string;
-      skipPropsWithoutDoc?: boolean;
-}
-
-export type TPropFilter = (props: IPropItem, component: IComponent) => boolean;
-
-export interface ParserOptions {
-      propFilter?: StaticPropFilter | TPropFilter;
-      shouldExtractLiteralValuesFromEnum?: boolean;
-}
-
-const defaultParserOpts: ParserOptions = {};
-
 const defaultCompilerOptions: ts.CompilerOptions = {
-      jsx: ts.JsxEmit.React,
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.Latest,
+      jsx: ts.JsxEmit.None,
+      module: ts.ModuleKind.ES2015,
+      target: ts.ScriptTarget.ES2015,
 };
-
-export function parse(
-      filePathOrPaths: string | string[],
-      compilerOptions: ts.CompilerOptions = defaultCompilerOptions,
-      parserOpts: ParserOptions = defaultParserOpts,
-): IComponentDoc[] {
-      const filePaths = Array.isArray(filePathOrPaths) ? filePathOrPaths : [filePathOrPaths];
-
-      const program = ts.createProgram(filePaths, compilerOptions);
-
-      const parser = new Parser(program, parserOpts);
-
-      const checker = program.getTypeChecker();
-
-
-      return filePaths
-            .map((filePath) => program.getSourceFile(filePath))
-            .filter((sourceFile): sourceFile is ts.SourceFile => typeof sourceFile !== 'undefined')
-            .flatMap((sourceFile) => {
-                  const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
-
-                  if (!moduleSymbol) {
-                        return [];
-                  }
-
-                  return checker.getExportsOfModule(moduleSymbol)
-                        .map((_export) => parser.getComponentDoc(_export))
-                        .filter((componentDoc): componentDoc is IComponentDoc => componentDoc !== null)
-                        .filter((componentDoc, index, componentDocs) => {
-                              // 因为如果从不同的文件重新导出，getExportsOfModule函数可以返回重复的导出。
-                              // 通过过滤掉重复项，我们确保每个组件在docs数组中只包含一次。
-                              return componentDocs.slice(index + 1).every((innerComponentsDoc) => innerComponentsDoc.exportName !== componentDoc!.exportName)
-                        })
-            })
-}
-
 interface IJSDoc {
       description: string;
       fullComment: string;
@@ -128,14 +75,9 @@ interface IJSDoc {
 
 class Parser {
       private checker: ts.TypeChecker; // 类型检查器，可用于对程序中的源文件进行语义分析
-      private propFilter: TPropFilter;
-      private shouldExtractLiteralValuesFromEnum: boolean;
 
-      constructor(program: ts.Program, opts: ParserOptions) {
-            const { shouldExtractLiteralValuesFromEnum } = opts;
+      constructor(program: ts.Program) {
             this.checker = program.getTypeChecker();
-            this.propFilter = createPropFilter(opts);
-            this.shouldExtractLiteralValuesFromEnum = Boolean(shouldExtractLiteralValuesFromEnum);
       }
 
       // 获取组件文档
@@ -158,13 +100,6 @@ class Parser {
             const { name: exportName } = _export;
             const { description, tags } = this.getJsDocFromComment(_export);
             const props = this.getPropsInfo(_export);
-
-            for (const [propName, prop] of Object.entries(props)) {
-                  const component: IComponent = { name: exportName };
-                  if (!this.propFilter(prop, component)) {
-                        delete props[propName];
-                  }
-            }
 
             return {
                   tags,
@@ -278,9 +213,7 @@ class Parser {
             // TypeFormatFlags.InTypeAlias 除去换行和缩进
             const propTypeString = this.checker.typeToString(propType, undefined, ts.TypeFormatFlags.InTypeAlias);
 
-            if ((this.shouldExtractLiteralValuesFromEnum)
-                  && propType.isUnion()
-                  && propType.types.every((type) => type.isStringLiteral())) {
+            if (propType.isUnion() && propType.types.every((type) => type.isStringLiteral())) {
                   return {
                         name: 'enum',
                         raw: propTypeString,
@@ -296,4 +229,38 @@ class Parser {
                   name: propTypeString
             }
       }
+}
+
+export default function parse(
+      filePathOrPaths: string | string[],
+      compilerOptions: ts.CompilerOptions = defaultCompilerOptions,
+): IComponentDoc[] {
+      const filePaths = Array.isArray(filePathOrPaths) ? filePathOrPaths : [filePathOrPaths];
+
+      const program = ts.createProgram(filePaths, compilerOptions);
+
+      const parser = new Parser(program);
+
+      const checker = program.getTypeChecker();
+
+
+      return filePaths
+            .map((filePath) => program.getSourceFile(filePath))
+            .filter((sourceFile): sourceFile is ts.SourceFile => typeof sourceFile !== 'undefined')
+            .flatMap((sourceFile) => {
+                  const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
+
+                  if (!moduleSymbol) {
+                        return [];
+                  }
+
+                  return checker.getExportsOfModule(moduleSymbol)
+                        .map((_export) => parser.getComponentDoc(_export))
+                        .filter((componentDoc): componentDoc is IComponentDoc => componentDoc !== null)
+                        .filter((componentDoc, index, componentDocs) => {
+                              // 因为如果从不同的文件重新导出，getExportsOfModule函数可以返回重复的导出。
+                              // 通过过滤掉重复项，我们确保每个组件在docs数组中只包含一次。
+                              return componentDocs.slice(index + 1).every((innerComponentsDoc) => innerComponentsDoc.exportName !== componentDoc!.exportName)
+                        })
+            })
 }
