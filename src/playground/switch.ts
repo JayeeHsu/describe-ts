@@ -1,3 +1,18 @@
+import { html, type CSSResultGroup } from 'lit';
+import { property, customElement } from 'lit/decorators.js';
+import { classMap } from 'lit-html/directives/class-map.js';
+import { live } from 'lit/directives/live.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
+
+import GlimmerElement from '../internal/glimmer-element';
+import styles from './switch/switch.style';
+
+export interface SwitchProps {
+    value: boolean | string;
+    disabled: boolean;
+    checked: boolean;
+}
+
 /**
  * @summary 开关
  *
@@ -14,17 +29,18 @@
  * @cssproperty --color-disabled - 按钮关闭状态的颜色
  * @cssproperty --color-active - 按钮打开状态的颜色
  */
-export class GlSwitch {
-    /** 组件作用表单时的值 */
-    @property({ reflect: true }) value: boolean | string | number = true;
+@customElement('gl-switch')
+export class GlSwitch extends GlimmerElement implements SwitchProps {
+    static styles: CSSResultGroup = styles;
+
+    // /** 组件作用表单时的值 */
+    @property({ reflect: true }) value = true;
 
     /** 禁用此组件，不会抛出change事件，但是click事件依旧生效 */
     @property({ type: Boolean, reflect: true }) disabled = false;
 
     /** 组件初始状态 */
     @property({ type: Boolean, reflect: true }) checked = false;
-
-    private xujiayi: string = 'xujiayitest'
 
     private handleChange(e: Event) {
         // This is not necessary cause e.composed is false, just in case.

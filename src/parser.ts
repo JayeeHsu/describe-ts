@@ -147,11 +147,13 @@ class Parser {
             // }
             if (!declaration ||
                   (!ts.isInterfaceDeclaration(declaration)
-                        && !ts.isTypeAliasDeclaration(declaration))
-                  && !ts.isClassDeclaration(declaration)
+                        && !ts.isTypeAliasDeclaration(declaration)
+                        // && !ts.isClassDeclaration(declaration)
+                  )
             ) {
                   return null;
             }
+            console.log(_export)
 
             const { name: exportName } = _export;
             const { description, tags } = this.getJsDocFromComment(_export);
@@ -267,8 +269,6 @@ class Parser {
                         type: this.getExtractType(propType),
                   }
             })
-
-            console.log(result)
 
             return result
       }

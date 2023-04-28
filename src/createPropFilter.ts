@@ -9,7 +9,7 @@ import {
 export function createPropFilter(opts: ParserOptions): TPropFilter {
       return (prop: IPropItem, component: IComponent) => {
             const { propFilter } = opts;
-            // skip children property in case it has no custom documentation
+            // 跳过 没有自定义文档的 “children” property (React)
             // if (prop.name === "children" && prop.description.length === 0) {
             //   return false;
             // }
