@@ -51,11 +51,6 @@ interface IComponentDoc {
       tags: Record<string, any>
 }
 
-
-interface IComponent {
-      name: string;
-}
-
 interface IPropItemType {
       name: string;
       value?: any;

@@ -1,0 +1,150 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`解析组件 1`] = `
+[
+  {
+    "description": "",
+    "exportName": "IIconConfig",
+    "methods": [],
+    "props": {
+      "0": {
+        "defaultValue": {
+          "value": undefined,
+        },
+        "description": "",
+        "name": "0",
+        "required": true,
+        "tags": {},
+        "type": {
+          "name": "any",
+        },
+      },
+      "1": {
+        "defaultValue": {
+          "value": undefined,
+        },
+        "description": "",
+        "name": "1",
+        "required": true,
+        "tags": {},
+        "type": {
+          "name": "any",
+        },
+      },
+      "2": {
+        "defaultValue": {
+          "value": undefined,
+        },
+        "description": "",
+        "name": "2",
+        "required": true,
+        "tags": {},
+        "type": {
+          "name": "any",
+        },
+      },
+      "3": {
+        "defaultValue": {
+          "value": undefined,
+        },
+        "description": "",
+        "name": "3",
+        "required": true,
+        "tags": {},
+        "type": {
+          "name": "any",
+        },
+      },
+      "4": {
+        "defaultValue": {
+          "value": undefined,
+        },
+        "description": "",
+        "name": "4",
+        "required": true,
+        "tags": {},
+        "type": {
+          "name": "any",
+        },
+      },
+      "__@unscopables@13": {
+        "defaultValue": {
+          "value": undefined,
+        },
+        "description": "Is an object whose properties have the value 'true'
+when they will be absent when used in a 'with' statement.",
+        "name": "__@unscopables@13",
+        "required": true,
+        "tags": {},
+        "type": {
+          "name": "{ [x: number]: boolean; length?: boolean; toString?: boolean; toLocaleString?: boolean; pop?: boolean; push?: boolean; concat?: boolean; join?: boolean; reverse?: boolean; shift?: boolean; slice?: boolean; sort?: boolean; ... 23 more ...; at?: boolean; }",
+        },
+      },
+      "length": {
+        "defaultValue": {
+          "value": undefined,
+        },
+        "description": "",
+        "name": "length",
+        "required": true,
+        "tags": {},
+        "type": {
+          "name": "any",
+        },
+      },
+    },
+    "tags": {},
+  },
+]
+`;
+
+exports[`解析组件 2`] = `
+[
+  {
+    "description": "",
+    "exportName": "SwitchProps",
+    "methods": [],
+    "props": {
+      "checked": {
+        "defaultValue": {
+          "value": undefined,
+        },
+        "description": "",
+        "name": "checked",
+        "required": true,
+        "tags": {},
+        "type": {
+          "name": "boolean",
+        },
+      },
+      "disabled": {
+        "defaultValue": {
+          "value": undefined,
+        },
+        "description": "",
+        "name": "disabled",
+        "required": true,
+        "tags": {},
+        "type": {
+          "name": "boolean",
+        },
+      },
+      "value": {
+        "defaultValue": {
+          "value": undefined,
+        },
+        "description": "",
+        "name": "value",
+        "required": true,
+        "tags": {},
+        "type": {
+          "name": "string | boolean",
+        },
+      },
+    },
+    "tags": {},
+  },
+]
+`;
+
+exports[`解析组件 3`] = `[]`;

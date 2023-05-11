@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "vitest run",
-    "play": "ts-node-esm src/playground/index.ts"
+    "play": "ts-node-esm src/playground.ts"
   },
   "repository": {
     "type": "git",
